@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terra Sector — Imperial Army Command Archive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Cinzel+Decorative:wght@700;900&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0c0504;
+  --ink-2:#160706;
+  --crimson-deep:#2e0808;
+  --crimson:#5c1010;
+  --crimson-bright:#8c1c1c;
+  --crimson-glow:#b8281f;
+  --gold:#c9a13b;
+  --gold-bright:#e9cf80;
+  --gold-dim:#7a601f;
+  --parchment:#e8dcc2;
+  --parchment-dim:#a9988668;
+  --line: rgba(201,161,59,0.28);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:
+    radial-gradient(ellipse at 50% -10%, rgba(140,28,28,0.25), transparent 55%),
+    radial-gradient(ellipse at 50% 110%, rgba(140,28,28,0.18), transparent 60%),
+    var(--ink);
+  color:var(--parchment);
+  font-family:'Cormorant Garamond', serif;
+  overflow-x:hidden;
+  cursor:default;
+}
+::selection{background:var(--gold-dim);color:var(--ink);}
+::-webkit-scrollbar{width:10px;}
+::-webkit-scrollbar-track{background:var(--ink-2);}
+::-webkit-scrollbar-thumb{background:linear-gradient(var(--gold-dim),var(--crimson-bright));border-radius:2px;}
+
+/* ============ UTILITY TYPE ============ */
+.eyebrow{
+  font-family:'Space Mono', monospace;
+  letter-spacing:0.32em;
+  text-transform:uppercase;
+  font-size:0.7rem;
+  color:var(--gold);
+  opacity:0.85;
+}
+.display{font-family:'Cinzel Decorative', serif;}
+.cinzel{font-family:'Cinzel', serif;}
+.mono{font-family:'Space Mono', monospace;}
+
+/* ============================================================
+   LOADER
+   ============================================================ */
+#loader{
+  position:fixed; inset:0; z-index:9999;
+  background:radial-gradient(ellipse at center, #1c0707 0%, var(--ink) 75%);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  overflow:hidden;
+  transition:opacity .9s ease, visibility .9s ease;
+}
+#loader.hide{opacity:0; visibility:hidden; pointer-events:none;}
+#runeField{position:absolute; inset:0; overflow:hidden;}
+.rune{
+  position:absolute;
+  color:var(--gold);
+  font-family:'Cinzel', serif;
+  opacity:0;
+  filter:drop-shadow(0 0 6px rgba(201,161,59,0.6));
+  animation:flicker linear infinite;
+  user-select:none;
+}
+@keyframes flicker{
+  0%,100%{opacity:0;}
+  4%{opacity:var(--peak,0.6);}
+  6%{opacity:0.05;}
+  10%{opacity:var(--peak,0.6);}
+  45%{opacity:0.08;}
+  50%{opacity:var(--peak,0.6);}
+  70%{opacity:0;}
+}
+.loader-core{position:relative; z-index:2; display:flex; flex-direction:column; align-items:center;}
+.seal-wrap{position:relative; width:170px; height:170px; margin-bottom:34px;}
+.seal-ring{
+  position:absolute; inset:0; border-radius:50%;
+  border:1px solid var(--line);
+}
+.seal-ring.r1{animation:spin 14s linear infinite;}
+.seal-ring.r2{inset:14px; animation:spinRev 10s linear infinite; border-style:dashed;}
+.seal-ring.r3{inset:28px; animation:spin 7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes spinRev{to{transform:rotate(-360deg);}}
+
+/* radar sweep behind the emblem */
+.seal-sweep{
+  position:absolute; inset:4px; border-radius:50%; overflow:hidden;
+}
+.seal-sweep::before{
+  content:''; position:absolute; inset:0;
+  background:conic-gradient(from 0deg, rgba(184,40,31,0.55), transparent 26%, transparent 100%);
+  animation:radar 2.6s linear infinite;
+  mix-blend-mode:screen;
+}
+@keyframes radar{to{transform:rotate(360deg);}}
+
+/* self-drawing emblem */
+.emblem{
+  position:absolute; inset:30px; filter:drop-shadow(0 0 14px rgba(184,40,31,0.5));
+}
+.emblem path, .emblem circle, .emblem polygon{
+  fill:none; stroke:var(--gold-bright); stroke-width:1.4; stroke-linecap:round;
+  stroke-dasharray:300; stroke-dashoffset:300;
+  animation:draw 2.4s ease-out forwards, lineglow 2.8s ease-in-out 2.4s infinite;
+}
+.emblem .fillstar{fill:rgba(140,28,28,0.35); stroke:var(--crimson-glow);}
+.emblem .d1{animation-delay:.1s, 2.4s;}
+.emblem .d2{animation-delay:.5s, 2.4s;}
+.emblem .d3{animation-delay:.9s, 2.4s;}
+.emblem .d4{animation-delay:1.3s, 2.4s;}
+@keyframes draw{to{stroke-dashoffset:0;}}
+@keyframes lineglow{
+  0%,100%{filter:drop-shadow(0 0 2px rgba(232,207,128,0.4));}
+  50%{filter:drop-shadow(0 0 9px rgba(232,207,128,0.9));}
+}
+.emblem-core{
+  position:absolute; left:50%; top:50%; width:10px; height:10px; border-radius:50%;
+  background:var(--gold-bright); transform:translate(-50%,-50%);
+  box-shadow:0 0 16px 4px rgba(232,207,128,0.8);
+  animation:corePulse 1.8s ease-in-out infinite;
+}
+@keyframes corePulse{0%,100%{opacity:0.6; transform:translate(-50%,-50%) scale(0.8);}50%{opacity:1; transform:translate(-50%,-50%) scale(1.3);}}
+.loader-title{
+  font-size:1.05rem; letter-spacing:0.4em; text-transform:uppercase;
+  color:var(--gold-bright); text-align:center; margin-bottom:8px;
+}
+.loader-sub{
+  font-family:'Space Mono', monospace; font-size:0.68rem; letter-spacing:0.18em;
+  color:var(--parchment-dim); text-align:center; min-height:1.2em;
+}
+.bar-track{
+  width:260px; height:3px; margin-top:26px; background:rgba(201,161,59,0.15);
+  position:relative; overflow:hidden;
+}
+.bar-fill{
+  position:absolute; left:0; top:0; bottom:0; width:0%;
+  background:linear-gradient(90deg, var(--crimson-bright), var(--gold-bright));
+  box-shadow:0 0 12px var(--gold);
+  transition:width .1s linear;
+}
+.bar-pct{font-family:'Space Mono', monospace; font-size:0.65rem; color:var(--gold); margin-top:10px; letter-spacing:0.15em;}
+.scanline{
+  position:absolute; left:0; right:0; height:2px; background:rgba(201,161,59,0.35);
+  filter:blur(1px); animation:scan 3.2s linear infinite; z-index:3; pointer-events:none;
+}
+@keyframes scan{0%{top:-2%;}100%{top:102%;}}
+
+/* ============================================================
+   MAIN SITE FRAME
+   ============================================================ */
+#site{opacity:0; transition:opacity 1.1s ease;}
+#site.show{opacity:1;}
+
+.bg-fx{position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden;}
+.ember{
+  position:absolute; bottom:-5%; width:3px; height:3px; border-radius:50%;
+  background:var(--gold-bright); box-shadow:0 0 6px 2px rgba(201,161,59,0.6);
+  opacity:0; animation:rise linear infinite;
+}
+@keyframes rise{
+  0%{opacity:0; transform:translateY(0) translateX(0);}
+  8%{opacity:0.8;}
+  90%{opacity:0.3;}
+  100%{opacity:0; transform:translateY(-115vh) translateX(var(--drift,20px));}
+}
+.vignette{position:fixed; inset:0; z-index:1; pointer-events:none;
+  background:radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
+}
+.grain{position:fixed; inset:0; z-index:2; pointer-events:none; opacity:0.05; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+header.topbar{
+  position:fixed; top:0; left:0; right:0; z-index:50;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:18px 5%; backdrop-filter:blur(10px);
+  background:linear-gradient(to bottom, rgba(12,5,4,0.92), rgba(12,5,4,0.55));
+  border-bottom:1px solid var(--line);
+  transition:padding .3s ease;
+}
+.brand{display:flex; align-items:center; gap:14px;}
+.brand-mark{width:38px; height:38px; flex:0 0 auto;}
+.brand-mark circle, .brand-mark path, .brand-mark polygon{
+  fill:none; stroke:var(--gold-bright); stroke-width:1.3;
+}
+.brand-mark .fillstar{fill:rgba(140,28,28,0.4); stroke:var(--crimson-glow);}
+.brand-mark{animation:brandSpin 22s linear infinite; transform-origin:center; filter:drop-shadow(0 0 4px rgba(201,161,59,0.5));}
+@keyframes brandSpin{to{transform:rotate(360deg);}}
+.brand-text .t1{font-size:0.95rem; letter-spacing:0.22em; color:var(--gold-bright); font-family:'Cinzel',serif;}
+.brand-text .t2{font-size:0.62rem; letter-spacing:0.18em; color:var(--parchment-dim); font-family:'Space Mono',monospace;}
+nav.links{display:flex; gap:34px;}
+nav.links a{
+  color:var(--parchment); text-decoration:none; font-family:'Space Mono',monospace;
+  font-size:0.68rem; letter-spacing:0.16em; text-transform:uppercase; position:relative; padding-bottom:6px; opacity:0.8;
+  transition:opacity .25s, color .25s;
+}
+nav.links a::after{
+  content:''; position:absolute; left:0; bottom:0; height:1px; width:0%;
+  background:var(--gold-bright); transition:width .35s ease;
+}
+nav.links a:hover, nav.links a.active{opacity:1; color:var(--gold-bright);}
+nav.links a:hover::after, nav.links a.active::after{width:100%;}
+.status-pill{
+  display:flex; align-items:center; gap:8px; font-family:'Space Mono',monospace;
+  font-size:0.6rem; letter-spacing:0.14em; color:var(--gold); border:1px solid var(--line);
+  padding:6px 12px; border-radius:20px;
+}
+.status-dot{width:6px; height:6px; border-radius:50%; background:#5ec98b; box-shadow:0 0 8px #5ec98b; animation:blink 2s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.25;}}
+
+main{position:relative; z-index:5;}
+
+.section{padding:160px 8% 100px; max-width:1280px; margin:0 auto; position:relative;}
+.reveal{opacity:0; transform:translateY(40px); transition:opacity .9s cubic-bezier(.16,.8,.3,1), transform .9s cubic-bezier(.16,.8,.3,1);}
+.reveal.in{opacity:1; transform:translateY(0);}
+
+.divider{
+  display:flex; align-items:center; gap:18px; margin:18px 0 36px;
+}
+.divider svg{flex:0 0 auto;}
+.divider .line{flex:1; height:1px; background:linear-gradient(to right, var(--gold-dim), transparent);}
+.divider.rev .line{background:linear-gradient(to left, var(--gold-dim), transparent);}
+
+/* HERO / OVERVIEW */
+.hero{padding-top:200px; text-align:left; position:relative;}
+.hero .glyph-bg{
+  position:absolute; right:-60px; top:-40px; width:480px; height:480px; opacity:0.07;
+  background-size:contain; pointer-events:none;
+  animation:slowspin 80s linear infinite;
+}
+@keyframes slowspin{to{transform:rotate(360deg);}}
+.hero h1{
+  font-size:clamp(2.6rem, 5.4vw, 4.6rem); line-height:1.04; font-weight:900;
+  color:var(--parchment); max-width:880px;
+}
+.hero h1 .accent{
+  color:transparent; background:linear-gradient(100deg, var(--gold-bright), var(--gold), var(--crimson-glow));
+  -webkit-background-clip:text; background-clip:text;
+  background-size:200% auto; animation:shimmer 5s linear infinite;
+}
+@keyframes shimmer{to{background-position:200% center;}}
+.hero p.lead{
+  margin-top:26px; max-width:680px; font-size:1.18rem; line-height:1.7; color:var(--parchment);
+  font-style:italic; font-weight:400;
+}
+.hero p.lead2{margin-top:18px; max-width:700px; font-size:1.02rem; line-height:1.85; color:var(--parchment-dim);}
+.stat-strip{
+  display:flex; gap:48px; margin-top:54px; flex-wrap:wrap;
+}
+.stat-strip .stat{border-left:1px solid var(--line); padding-left:18px;}
+.stat-strip .num{font-family:'Cinzel',serif; font-size:2.1rem; color:var(--gold-bright); font-weight:600;}
+.stat-strip .lbl{font-family:'Space Mono',monospace; font-size:0.62rem; letter-spacing:0.14em; color:var(--parchment-dim); text-transform:uppercase; margin-top:4px;}
+
+/* HOSTS */
+.section-head{display:flex; flex-direction:column; gap:10px; margin-bottom:50px;}
+.section-head h2{font-family:'Cinzel',serif; font-size:2.3rem; color:var(--parchment); font-weight:600;}
+.section-head p{max-width:680px; color:var(--parchment-dim); font-size:1.02rem; line-height:1.7;}
+
+.host-grid{
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(310px,1fr)); gap:26px;
+}
+.host-card{
+  position:relative; border:1px solid var(--line); padding:30px 26px 28px;
+  background:linear-gradient(160deg, rgba(92,16,16,0.18), rgba(12,5,4,0.55));
+  overflow:hidden; transition:transform .4s ease, border-color .4s ease, box-shadow .4s ease;
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%);
+}
+.host-card::before{
+  content:''; position:absolute; inset:0; opacity:0; transition:opacity .5s ease;
+  background:radial-gradient(circle at 80% -10%, rgba(201,161,59,0.22), transparent 60%);
+}
+.host-card:hover{transform:translateY(-8px); border-color:var(--gold-dim); box-shadow:0 18px 40px -16px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,161,59,0.15);}
+.host-card:hover::before{opacity:1;}
+.host-top{display:flex; align-items:flex-start; justify-content:space-between; gap:14px;}
+.host-icon{
+  width:48px; height:48px; flex:0 0 auto; color:var(--gold-bright);
+  filter:drop-shadow(0 0 6px rgba(201,161,59,0.45));
+  transition:transform .5s ease;
+}
+.host-card:hover .host-icon{transform:rotate(8deg) scale(1.08);}
+.host-tag{font-family:'Space Mono',monospace; font-size:0.6rem; letter-spacing:0.14em; color:var(--gold); border:1px solid var(--line); padding:4px 9px; border-radius:3px; white-space:nowrap;}
+.host-card h3{font-family:'Cinzel',serif; font-size:1.35rem; margin-top:18px; color:var(--parchment); font-weight:600;
+  position:relative; display:inline-block;}
+.host-cmd{font-family:'Space Mono',monospace; font-size:0.62rem; color:var(--crimson-glow); letter-spacing:0.1em; margin-top:4px;}
+.host-card p{margin-top:14px; font-size:0.97rem; line-height:1.65; color:var(--parchment-dim);}
+.host-bar{height:1px; background:var(--line); margin:18px 0 14px; position:relative; overflow:hidden;}
+.host-bar i{position:absolute; left:-30%; top:0; bottom:0; width:30%;
+  background:linear-gradient(90deg, transparent, var(--gold-bright), transparent);
+  animation:sweep 3.4s ease-in-out infinite;}
+@keyframes sweep{0%{left:-30%;}100%{left:100%;}}
+.host-foot{display:flex; justify-content:space-between; font-family:'Space Mono',monospace; font-size:0.62rem; color:var(--parchment-dim); letter-spacing:0.08em;}
+
+/* COMPOSITION */
+.comp-wrap{display:grid; grid-template-columns:1.1fr 1fr; gap:60px; align-items:start;}
+@media (max-width:900px){.comp-wrap{grid-template-columns:1fr;}}
+.comp-list{display:flex; flex-direction:column; gap:26px;}
+.comp-row .top{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;}
+.comp-row .name{font-family:'Cinzel',serif; font-size:1.02rem; color:var(--parchment); letter-spacing:0.02em;}
+.comp-row .detail{font-family:'Space Mono',monospace; font-size:0.68rem; color:var(--parchment-dim);}
+.comp-row .pct{font-family:'Space Mono',monospace; font-size:1.1rem; color:var(--gold-bright); font-weight:700;}
+.gauge{height:14px; border:1px solid var(--line); position:relative; background:rgba(0,0,0,0.3); overflow:hidden;}
+.gauge .fill{
+  position:absolute; inset:0; width:0%; 
+  background:repeating-linear-gradient(45deg, var(--crimson-bright) 0 8px, var(--crimson) 8px 16px);
+  box-shadow:inset 0 0 0 1px rgba(201,161,59,0.4), 0 0 14px rgba(140,28,28,0.5);
+  transition:width 1.6s cubic-bezier(.16,.8,.3,1);
+}
+.gauge .fill::after{
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(90deg, transparent 0%, rgba(201,161,59,0.55) 50%, transparent 100%);
+  background-size:200% 100%; animation:gloss 2.4s linear infinite;
+}
+@keyframes gloss{0%{background-position:200% 0;}100%{background-position:-50% 0;}}
+.gauge .cap{position:absolute; right:0; top:0; bottom:0; width:2px; background:var(--gold-bright); box-shadow:0 0 10px var(--gold-bright); transition:right 1.6s cubic-bezier(.16,.8,.3,1);}
+
+.comp-visual{
+  position:relative; border:1px solid var(--line); padding:34px; min-height:380px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+  background:radial-gradient(ellipse at 50% 0%, rgba(92,16,16,0.3), transparent 70%);
+}
+.host-ring{position:relative; width:230px; height:230px;}
+.host-ring svg{width:100%; height:100%; transform:rotate(-90deg);}
+.host-ring circle{fill:none; stroke-width:10;}
+.host-ring .bgc{stroke:rgba(201,161,59,0.12);}
+.ring-center{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;}
+.ring-center .num{font-family:'Cinzel',serif; font-size:2.4rem; color:var(--gold-bright);}
+.ring-center .lbl{font-family:'Space Mono',monospace; font-size:0.6rem; letter-spacing:0.16em; color:var(--parchment-dim); margin-top:4px;}
+.legend{display:flex; flex-wrap:wrap; gap:14px; margin-top:26px; justify-content:center;}
+.legend .li{display:flex; align-items:center; gap:7px; font-family:'Space Mono',monospace; font-size:0.62rem; color:var(--parchment-dim);}
+.legend .sw{width:9px; height:9px; border-radius:50%;}
+
+footer{
+  text-align:center; padding:60px 8% 50px; border-top:1px solid var(--line); margin-top:60px;
+  font-family:'Space Mono',monospace; font-size:0.65rem; color:var(--parchment-dim); letter-spacing:0.1em;
+}
+footer .sigil{margin-bottom:14px; opacity:0.6;}
+
+@media (max-width:760px){
+  nav.links{display:none;}
+  .section{padding:140px 6% 80px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ LOADER ============ -->
+<div id="loader">
+  <div id="runeField"></div>
+  <div class="scanline"></div>
+  <div class="loader-core">
+    <div class="seal-wrap">
+      <div class="seal-ring r1"></div>
+      <div class="seal-ring r2"></div>
+      <div class="seal-ring r3"></div>
+      <div class="seal-sweep"></div>
+      <svg class="emblem" viewBox="0 0 100 100">
+        <circle class="d1" cx="50" cy="50" r="40"/>
+        <polygon class="d2 fillstar" points="50,14 61,39 88,39 66,56 75,82 50,66 25,82 34,56 12,39 39,39"/>
+        <circle class="d3" cx="50" cy="50" r="26"/>
+        <path class="d4" d="M50 24 L50 76 M24 50 L76 50 M33 33 L67 67 M67 33 L33 67"/>
+      </svg>
+      <div class="emblem-core"></div>
+    </div>
+    <div class="loader-title cinzel">TERRA SECTOR ARCHIVE</div>
+    <div class="loader-sub mono" id="loaderSub">ESTABLISHING SECURE LINK…</div>
+    <div class="bar-track"><div class="bar-fill" id="barFill"></div></div>
+    <div class="bar-pct mono" id="barPct">00%</div>
+  </div>
+</div>
+
+<!-- ============ MAIN SITE ============ -->
+<div id="site">
+  <div class="bg-fx" id="emberField"></div>
+  <div class="vignette"></div>
+  <div class="grain"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="40"/>
+        <polygon class="fillstar" points="50,14 61,39 88,39 66,56 75,82 50,66 25,82 34,56 12,39 39,39"/>
+        <circle cx="50" cy="50" r="26"/>
+      </svg>
+      <div class="brand-text">
+        <div class="t1">TERRA SECTOR</div>
+        <div class="t2">HIGH COMMAND // LAND ARMIES</div>
+      </div>
+    </div>
+    <nav class="links">
+      <a href="#overview" class="active">Overview</a>
+      <a href="#hosts">The Hosts</a>
+      <a href="#composition">Composition</a>
+    </nav>
+    <div class="status-pill"><span class="status-dot"></span> ARCHIVE ONLINE</div>
+  </header>
+
+  <main>
+    <!-- OVERVIEW -->
+    <section class="section hero" id="overview">
+      <svg class="glyph-bg" viewBox="0 0 200 200"><circle cx="100" cy="100" r="98" fill="none" stroke="#c9a13b" stroke-width="0.5"/><circle cx="100" cy="100" r="80" fill="none" stroke="#c9a13b" stroke-width="0.5"/><circle cx="100" cy="100" r="62" fill="none" stroke="#c9a13b" stroke-width="0.5"/><path d="M100 2 L100 198 M2 100 L198 100" stroke="#c9a13b" stroke-width="0.5"/></svg>
+      <div class="eyebrow reveal">I. TERRA SECTOR — LAND DOMINION</div>
+      <h1 class="display reveal" style="transition-delay:.1s">The Hosts of the<br><span class="accent">Imperial Federation</span></h1>
+      <p class="lead reveal" style="transition-delay:.2s">"Each Host is not merely a military unit, but a cultural banner — a marching nation unto itself, embodying its own martial philosophy beneath the Shahanshah's golden standard."</p>
+      <p class="lead2 reveal" style="transition-delay:.3s">The Land Armies of Isol are organized into seven mighty Hosts, vast enough to wage independent campaigns across the breadth of the Golden Continent. Where the Aqua Sector commands the deep and the Caelum Sector the sky, Terra holds the earth itself — its forests, its mountains, its frozen marches, and the burning roads between them. Below is recorded the full disposition of each Host, its doctrine, and the standard composition of its warriors, as catalogued by the Office of the High Marshal.</p>
+      <div class="stat-strip reveal" style="transition-delay:.4s">
+        <div class="stat"><div class="num" data-count="7">0</div><div class="lbl">Active Hosts</div></div>
+        <div class="stat"><div class="num" data-count="40" data-suffix="k">0</div><div class="lbl">Max. Warriors / Host</div></div>
+        <div class="stat"><div class="num" data-count="1" data-suffix="">0</div><div class="lbl">Supreme Commander</div></div>
+        <div class="stat"><div class="num" data-count="122">0</div><div class="lbl">Tribes Represented</div></div>
+      </div>
+    </section>
+
+    <!-- HOSTS -->
+    <section class="section" id="hosts">
+      <div class="section-head reveal">
+        <div class="eyebrow">II. ORDER OF BATTLE</div>
+        <h2 class="cinzel">The Seven Hosts</h2>
+        <p>Each marching nation unto itself — a doctrine, a tribe of tribes, and a banner carried into every campaign of the Federation.</p>
+      </div>
+
+      <div class="host-grid">
+
+        <div class="host-card reveal">
+          <div class="host-top">
+            <svg class="host-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="24" cy="24" r="9"/><path d="M24 2v8M24 38v8M2 24h8M38 24h8M9 9l6 6M33 33l6 6M9 39l6-6M33 15l6-6"/></svg>
+            <span class="host-tag mono">PERSONAL GUARD</span>
+          </div>
+          <h3>The Golden Host</h3>
+          <div class="host-cmd mono">CMD. LEANDER SHAN-VALERIAN</div>
+          <p>Commanded by the Shahanshah himself — the personal guard and living exemplar of all others. Composed of elite Tahnkasha champions and mixed contingents drawn from every tribe of the Federation, it is less an army than a procession of the Empire's own image.</p>
+          <div class="host-bar"><i></i></div>
+          <div class="host-foot"><span>DOCTRINE: EXEMPLARY</span><span>STRENGTH: ~38,000</span></div>
+        </div>
+
+        <div class="host-card reveal">
+          <div class="host-top">
+            <svg class="host-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="8" y="20" width="32" height="20" /><path d="M8 20l16-14 16 14M16 40V28M24 40V28M32 40V28"/></svg>
+            <span class="host-tag mono">SIEGE &amp; ATTRITION</span>
+          </div>
+          <h3>The Iron Host</h3>
+          <div class="host-cmd mono">CMD. SEAT OF THE GREAT COMMANDERS</div>
+          <p>Masters of siege warfare, heavy infantry, and the patient art of earthworks. Where the Iron Host encamps, walls rise from the soil itself; where it besieges, no citadel is reckoned eternal.</p>
+          <div class="host-bar"><i></i></div>
+          <div class="host-foot"><span>DOCTRINE: ATTRITION</span><span>STRENGTH: ~34,000</span></div>
+        </div>
+
+        <div class="host-card reveal">
+          <div class="host-top">
+            <svg class="host-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 30l16-22 20 8-10 26z"/><path d="M22 8l6 28"/></svg>
+            <span class="host-tag mono">MOBILE STRIKE</span>
+          </div>
+          <h3>The Steel Host</h3>
+          <div class="host-cmd mono">CMD. SEAT OF THE GREAT COMMANDERS</div>
+          <p>Renowned across Isol for mobility, armored cavalry, and precision strikes. The Steel Host does not grind down its enemies — it removes them, in a single decisive thrust, before the foe has reckoned the war begun.</p>
+          <div class="host-bar"><i></i></div>
+          <div class="host-foot"><span>DOCTRINE: PRECISION</span><span>STRENGTH: ~30,000</span></div>
+        </div>
+
+        <div class="host-card reveal">
+          <div class="host-top">
+            <svg class="host-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M30 6a18 18 0 100 36 14 14 0 010-36z"/></svg>
+            <span class="host-tag mono">NIGHT &amp; SHADOW</span>
+          </div>
+          <h3>The Obsidian Host</h3>
+          <div class="host-cmd mono">CMD. SEAT OF THE GREAT COMMANDERS</div>
+          <p>Specialists in night warfare, ambush, and the slow unraveling of an enemy's resolve. They are rarely seen and rarely heard — only felt, in the moment an army realizes it has already lost.</p>
+          <div class="host-bar"><i></i></div>
+          <div class="host-foot"><span>DOCTRINE: PSYCHOLOGICAL</span><span>STRENGTH: ~26,000</span></div>
+        </div>
+
+        <div class="host-card reveal">
+          <div class="host-top">
+            <svg class="host-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M24 4c8 8 14 16 14 24a14 14 0 01-28 0c0-8 6-16 14-24z"/></svg>
+            <span class="host-tag mono">SHOCK TROOPS</span>
+          </div>
+          <h3>The Crimson Host</h3>
+          <div class="host-cmd mono">CMD. SEAT OF THE GREAT COMMANDERS</div>
+          <p>The shock troops of the Empire — berserkers, wolf-blooded, and fanatical zealots who measure devotion in blood spent. Where the line must break, the Crimson Host is sent first, and asks for nothing in return but the charge.</p>
+          <div class="host-bar"><i></i></div>
+          <div class="host-foot"><span>DOCTRINE: FANATICAL SHOCK</span><span>STRENGTH: ~32,000</span></div>
+        </div>
+
+        <div class="host-card reveal">
+          <div class="host-top">
+            <svg class="host-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M24 4v40M8 14l32 20M40 14L8 34M14 8l20 32M34 8L14 40" /></svg>
+            <span class="host-tag mono">WILDS &amp; CANOPY</span>
+          </div>
+          <h3>The Verdant Host</h3>
+          <div class="host-cmd mono">CMD. SEAT OF THE GREAT COMMANDERS</div>
+          <p>Forest and jungle specialists — skirmishers, hunters, and beast-tamers who turn the wilderness itself into a weapon. No host marches lighter, nor vanishes more completely when the canopy closes behind it.</p>
+          <div class="host-bar"><i></i></div>
+          <div class="host-foot"><span>DOCTRINE: ASYMMETRIC</span><span>STRENGTH: ~24,000</span></div>
+        </div>
+
+        <div class="host-card reveal">
+          <div class="host-top">
+            <svg class="host-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M24 4l3 8 8-4-3 8 8 1-6 6 6 6-8 1 3 8-8-4-3 8-3-8-8 4 3-8-8-1 6-6-6-6 8-1-3-8 8 4z"/></svg>
+            <span class="host-tag mono">NORTHERN MARCH</span>
+          </div>
+          <h3>The White Host</h3>
+          <div class="host-cmd mono">CMD. SEAT OF THE GREAT COMMANDERS</div>
+          <p>Guardians of the northern marches, famed for discipline and endurance against the extreme cold of the Mandate's border. The least glorified Host, and the one the Empire can least afford to lose.</p>
+          <div class="host-bar"><i></i></div>
+          <div class="host-foot"><span>DOCTRINE: ENDURANCE</span><span>STRENGTH: ~28,000</span></div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- COMPOSITION -->
+    <section class="section" id="composition">
+      <div class="section-head reveal">
+        <div class="eyebrow">III. STANDARD DISPOSITION</div>
+        <h2 class="cinzel">Composition of the Average Host</h2>
+        <p>Every Host of the Terra Sector fields between 20,000 and 40,000 warriors, drawn together in the following proportions, as catalogued for campaign logistics and battlefield doctrine.</p>
+      </div>
+
+      <div class="comp-wrap">
+        <div class="comp-list">
+
+          <div class="comp-row reveal">
+            <div class="top">
+              <div><div class="name cinzel">Heavy Infantry</div><div class="detail mono">SHIELDBEARERS · SPEAR-LINES · MAGE-WARRIORS · BERSERKERS</div></div>
+              <div class="pct"><span class="count" data-target="40">0</span>%</div>
+            </div>
+            <div class="gauge" data-pct="40"><div class="fill"></div><div class="cap"></div></div>
+          </div>
+
+          <div class="comp-row reveal">
+            <div class="top">
+              <div><div class="name cinzel">Light Infantry</div><div class="detail mono">SKIRMISHERS · ARCHERS · TRIBAL SPECIALISTS</div></div>
+              <div class="pct"><span class="count" data-target="25">0</span>%</div>
+            </div>
+            <div class="gauge" data-pct="25"><div class="fill"></div><div class="cap"></div></div>
+          </div>
+
+          <div class="comp-row reveal">
+            <div class="top">
+              <div><div class="name cinzel">Cavalry</div><div class="detail mono">WOLF · LION · RAPTOR-MOUNTED RIDERS</div></div>
+              <div class="pct"><span class="count" data-target="20">0</span>%</div>
+            </div>
+            <div class="gauge" data-pct="20"><div class="fill"></div><div class="cap"></div></div>
+          </div>
+
+          <div class="comp-row reveal">
+            <div class="top">
+              <div><div class="name cinzel">Elite Guard / Tahnkasha</div><div class="detail mono">CHAMPIONS · RITUAL DUELISTS · HONOR-GUARDS</div></div>
+              <div class="pct"><span class="count" data-target="10">0</span>%</div>
+            </div>
+            <div class="gauge" data-pct="10"><div class="fill"></div><div class="cap"></div></div>
+          </div>
+
+          <div class="comp-row reveal">
+            <div class="top">
+              <div><div class="name cinzel">Auxiliary Specialists</div><div class="detail mono">ENGINEERS · HEALERS · BEAST-HANDLERS</div></div>
+              <div class="pct"><span class="count" data-target="5">0</span>%</div>
+            </div>
+            <div class="gauge" data-pct="5"><div class="fill"></div><div class="cap"></div></div>
+          </div>
+
+        </div>
+
+        <div class="comp-visual reveal">
+          <div class="host-ring">
+            <svg viewBox="0 0 230 230">
+              <circle class="bgc" cx="115" cy="115" r="100"></circle>
+              <circle id="ringHeavy" cx="115" cy="115" r="100" stroke="#8c1c1c" stroke-dasharray="628" stroke-dashoffset="628"></circle>
+              <circle id="ringLight" cx="115" cy="115" r="100" stroke="#b8281f" stroke-dasharray="628" stroke-dashoffset="628"></circle>
+              <circle id="ringCav" cx="115" cy="115" r="100" stroke="#c9a13b" stroke-dasharray="628" stroke-dashoffset="628"></circle>
+              <circle id="ringElite" cx="115" cy="115" r="100" stroke="#e9cf80" stroke-dasharray="628" stroke-dashoffset="628"></circle>
+              <circle id="ringAux" cx="115" cy="115" r="100" stroke="#7a601f" stroke-dasharray="628" stroke-dashoffset="628"></circle>
+            </svg>
+            <div class="ring-center">
+              <div class="num">~30K</div>
+              <div class="lbl mono">AVG. STRENGTH</div>
+            </div>
+          </div>
+          <div class="legend">
+            <div class="li"><span class="sw" style="background:#8c1c1c"></span>Heavy Inf. 40%</div>
+            <div class="li"><span class="sw" style="background:#b8281f"></span>Light Inf. 25%</div>
+            <div class="li"><span class="sw" style="background:#c9a13b"></span>Cavalry 20%</div>
+            <div class="li"><span class="sw" style="background:#e9cf80"></span>Elite 10%</div>
+            <div class="li"><span class="sw" style="background:#7a601f"></span>Auxiliary 5%</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="sigil">✦</div>
+    OFFICE OF THE HIGH MARSHAL OF TERRA &nbsp;·&nbsp; ARCHIVE COMPILED UNDER SEAL OF THE DĪVĀN-I-SHA &nbsp;·&nbsp; YEAR 1080 OF THE DIVINE MOTHER'S CALENDAR
+  </footer>
+</div>
+
+<script>
+/* ---------- LOADER: rune flicker field ---------- */
+const runeChars = ["ॐ","ध","श्री","अ","ऋ","ꨄ","𐎠","𐎼","𐏐","ᚱ","ᛟ","ᛋ","श","ह","𐤀","𐤍","𐍈","☥","✦","𐎹"];
+const runeField = document.getElementById('runeField');
+for(let i=0;i<55;i++){
+  const r = document.createElement('div');
+  r.className='rune';
+  r.textContent = runeChars[Math.floor(Math.random()*runeChars.length)];
+  r.style.left = Math.random()*100+'%';
+  r.style.top = Math.random()*100+'%';
+  r.style.fontSize = (10+Math.random()*22)+'px';
+  r.style.setProperty('--peak', (0.25+Math.random()*0.5).toFixed(2));
+  r.style.animationDuration = (2.5+Math.random()*3.5)+'s';
+  r.style.animationDelay = (Math.random()*4)+'s';
+  runeField.appendChild(r);
+}
+
+/* ---------- LOADER: progress + messages ---------- */
+const messages = [
+  "ESTABLISHING SECURE LINK…",
+  "VERIFYING IMPERIAL SEAL…",
+  "DECRYPTING ORDER OF BATTLE…",
+  "LOADING HOST DOSSIERS…",
+  "ALIGNING TERRA SECTOR RECORDS…",
+  "ACCESS GRANTED."
+];
+const barFill = document.getElementById('barFill');
+const barPct = document.getElementById('barPct');
+const loaderSub = document.getElementById('loaderSub');
+const DURATION = 5000;
+let start = null;
+function tick(ts){
+  if(!start) start = ts;
+  const elapsed = ts-start;
+  const pct = Math.min(100, (elapsed/DURATION)*100);
+  barFill.style.width = pct+'%';
+  barPct.textContent = String(Math.floor(pct)).padStart(2,'0')+'%';
+  const msgIdx = Math.min(messages.length-1, Math.floor((pct/100)*(messages.length-1)));
+  loaderSub.textContent = messages[msgIdx];
+  if(elapsed < DURATION){
+    requestAnimationFrame(tick);
+  } else {
+    finishLoad();
+  }
+}
+requestAnimationFrame(tick);
+
+function finishLoad(){
+  const loader = document.getElementById('loader');
+  const site = document.getElementById('site');
+  loader.classList.add('hide');
+  site.classList.add('show');
+  setTimeout(()=>{ loader.style.display='none'; revealOnLoad(); }, 950);
+}
+
+/* ---------- Ember particle field ---------- */
+const emberField = document.getElementById('emberField');
+for(let i=0;i<34;i++){
+  const e = document.createElement('div');
+  e.className='ember';
+  e.style.left = Math.random()*100+'%';
+  e.style.setProperty('--drift', (Math.random()*60-30)+'px');
+  e.style.animationDuration = (9+Math.random()*10)+'s';
+  e.style.animationDelay = (Math.random()*12)+'s';
+  e.style.width = e.style.height = (1.5+Math.random()*2.5)+'px';
+  emberField.appendChild(e);
+}
+
+/* ---------- Scroll reveal ---------- */
+function revealOnLoad(){
+  const items = document.querySelectorAll('.reveal');
+  const obs = new IntersectionObserver((entries)=>{
+    entries.forEach(en=>{
+      if(en.isIntersecting){
+        en.target.classList.add('in');
+        obs.unobserve(en.target);
+      }
+    });
+  }, {threshold:0.15});
+  items.forEach(it=>obs.observe(it));
+}
+
+/* ---------- Composition bars + counters + ring ---------- */
+const gauges = document.querySelectorAll('.gauge');
+const ringMap = {40:'ringHeavy',25:'ringLight',20:'ringCav',10:'ringElite',5:'ringAux'};
+let ringOffset = 0;
+const compObserver = new IntersectionObserver((entries)=>{
+  entries.forEach(en=>{
+    if(en.isIntersecting){
+      animateComposition();
+      compObserver.disconnect();
+    }
+  });
+}, {threshold:0.3});
+const compSection = document.getElementById('composition');
+if(compSection) compObserver.observe(compSection);
+
+function animateComposition(){
+  gauges.forEach(g=>{
+    const pct = parseFloat(g.dataset.pct);
+    requestAnimationFrame(()=>{
+      g.querySelector('.fill').style.width = pct+'%';
+      g.querySelector('.cap').style.right = (100-pct)+'%';
+    });
+  });
+  document.querySelectorAll('.count').forEach(c=>{
+    const target = parseFloat(c.dataset.target);
+    let cur = 0;
+    const step = Math.max(target/40,0.4);
+    const iv = setInterval(()=>{
+      cur += step;
+      if(cur>=target){cur=target; clearInterval(iv);}
+      c.textContent = Math.round(cur);
+    },28);
+  });
+  // ring: stacked dash offsets, circumference = 2*pi*100 = 628.3
+  const circ = 628.3;
+  let acc = 0;
+  [40,25,20,10,5].forEach(pct=>{
+    const id = ringMap[pct];
+    const el = document.getElementById(id);
+    const len = (pct/100)*circ;
+    el.style.strokeDasharray = len+' '+(circ-len);
+    el.style.strokeDashoffset = -acc;
+    el.style.transition = 'stroke-dashoffset 1.2s ease, stroke-dasharray 1.2s ease';
+    acc += len;
+  });
+}
+
+/* ---------- Hero stat counters ---------- */
+window.addEventListener('load', ()=>{
+  document.querySelectorAll('.stat-strip .num').forEach(n=>{
+    const target = parseFloat(n.dataset.count);
+    const suffix = n.dataset.suffix||'';
+    let cur=0; const step=Math.max(target/30,1);
+    setTimeout(()=>{
+      const iv=setInterval(()=>{
+        cur+=step;
+        if(cur>=target){cur=target;clearInterval(iv);}
+        n.textContent = Math.round(cur)+suffix;
+      },35);
+    }, 1200);
+  });
+});
+
+/* ---------- Nav active state on scroll ---------- */
+const sections = document.querySelectorAll('main .section');
+const navLinks = document.querySelectorAll('nav.links a');
+window.addEventListener('scroll', ()=>{
+  let current = sections[0]?.id;
+  sections.forEach(sec=>{
+    if(window.scrollY + 140 >= sec.offsetTop) current = sec.id;
+  });
+  navLinks.forEach(a=>{
+    a.classList.toggle('active', a.getAttribute('href') === '#'+current);
+  });
+});
+</script>
+</body>
+</html>
